@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { useNotes } from '../context/NotesContext';
-import Select from 'react-select'; // Import react-select
+import Select from 'react-select';
 
 const Home = () => {
   const { notes, setNotes, categories, setCategories, loggedInUser } = useNotes();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState([]); // Store multiple categories
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [urgency, setUrgency] = useState('Low');
   const [image, setImage] = useState(null);
   const [notification, setNotification] = useState(null);
@@ -19,46 +19,58 @@ const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
-  const [newCategory, setNewCategory] = useState(''); // New category state
+  const [newCategory, setNewCategory] = useState('');
 
   const currentDate = new Date().toLocaleDateString();
 
   useEffect(() => {
     if (loggedInUser) {
-      const userNotes = JSON.parse(localStorage.getItem('notes')) || [];
-      const userNotesFiltered = userNotes.filter(note => note.userId === loggedInUser.username);
-      setNotes(userNotesFiltered);
+      try {
+        const userNotes = JSON.parse(localStorage.getItem('notes')) || [];
+        const userNotesFiltered = userNotes.filter(note => note.userId === loggedInUser.username);
+        setNotes(userNotesFiltered);
+      } catch (error) {
+        console.error("Error retrieving notes from localStorage", error);
+        setNotes([]);
+      }
     }
   }, [loggedInUser, setNotes]);
 
   const handleCreateNote = (e) => {
     e.preventDefault();
-    if (title && content && selectedCategories.length > 0) {
-      const newNote = {
-        id: Date.now().toString(),
-        userId: loggedInUser.username,
-        title,
-        content,
-        categories: selectedCategories.map((category) => category.value), // Multiple categories
-        date: currentDate,
-        urgency,
-        image: image ? URL.createObjectURL(image) : null,
-      };
-      const updatedNotes = [...notes, newNote];
-      setNotes(updatedNotes);
-      localStorage.setItem('notes', JSON.stringify(updatedNotes)); // Save to localStorage
-      setTitle('');
-      setContent('');
-      setSelectedCategories([]);
-      setUrgency('Low');
-      setImage(null);
-      setOpenModal(false);
-      setNotification({ type: 'success', message: 'Note successfully added!' });
-      setTimeout(() => setNotification(null), 3000); // Clear notification after 3 seconds
-    }
-  };
+    // Temporarily comment out this login check
+  /*
+  if (!loggedInUser) {
+    setNotification({ type: 'error', message: 'Please sign in to create a note.' });
+    setTimeout(() => setNotification(null), 3000);
+    return;
+  }
+  */
+  if (title && content && selectedCategories.length > 0) {
+    const newNote = {
+      id: Date.now().toString(),
+      userId: loggedInUser ? loggedInUser.username : "guest", // Use "guest" if loggedInUser is null
+      title,
+      content,
+      categories: selectedCategories.map((category) => category.value),
+      date: currentDate,
+      urgency,
+      image: image ? URL.createObjectURL(image) : null,
+    };
+    const updatedNotes = [...notes, newNote];
+    setNotes(updatedNotes);
+    localStorage.setItem('notes', JSON.stringify(updatedNotes));
+    setTitle('');
+    setContent('');
+    setSelectedCategories([]);
+    setUrgency('Low');
+    setImage(null);
+    setOpenModal(false);
+    setNotification({ type: 'success', message: 'Note successfully added!' });
+    setTimeout(() => setNotification(null), 3000);
+  }
+};
 
-  // Handle category change using react-select
   const handleCategoryChange = (selectedOptions) => {
     setSelectedCategories(selectedOptions || []);
   };
@@ -72,7 +84,7 @@ const Home = () => {
     if (noteToDelete) {
       const updatedNotes = notes.filter((note) => note.id !== noteToDelete.id);
       setNotes(updatedNotes);
-      localStorage.setItem('notes', JSON.stringify(updatedNotes)); // Save updated notes to localStorage
+      localStorage.setItem('notes', JSON.stringify(updatedNotes));
       setOpenDeleteModal(false);
       setNotification({ type: 'success', message: 'Note successfully deleted!' });
       setTimeout(() => setNotification(null), 3000);
@@ -99,21 +111,19 @@ const Home = () => {
   const isThisWeek = (date) => {
     const noteDate = new Date(date);
     const today = new Date();
-    const firstDayOfWeek = today.getDate() - today.getDay();
-    const lastDayOfWeek = firstDayOfWeek + 6;
-    const startOfWeek = new Date(today.setDate(firstDayOfWeek));
-    const endOfWeek = new Date(today.setDate(lastDayOfWeek));
+    const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+    const endOfWeek = new Date(today.setDate(startOfWeek.getDate() + 6));
     return noteDate >= startOfWeek && noteDate <= endOfWeek;
   };
 
-  // Function to add new category
   const handleAddCategory = () => {
-    if (newCategory && !categories.includes(newCategory)) {
-      setCategories([...categories, newCategory]); // Add new category to categories state
+    const normalizedCategory = newCategory.trim().toLowerCase();
+    if (normalizedCategory && !categories.some(cat => cat.toLowerCase() === normalizedCategory)) {
+      setCategories([...categories, newCategory]);
       setNewCategory('');
       setNotification({ type: 'success', message: 'Category added successfully!' });
       setTimeout(() => setNotification(null), 3000);
-    } else if (categories.includes(newCategory)) {
+    } else {
       setNotification({ type: 'error', message: 'Category already exists!' });
       setTimeout(() => setNotification(null), 3000);
     }
@@ -125,7 +135,6 @@ const Home = () => {
       <main className="flex-grow p-4">
         <h1 className="text-2xl font-bold mb-4">Your Notes</h1>
 
-        {/* Filters */}
         <div className="mb-4 flex space-x-4">
           <input
             type="text"
@@ -134,7 +143,6 @@ const Home = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="input input-bordered w-1/3"
           />
-
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
@@ -147,7 +155,6 @@ const Home = () => {
               </option>
             ))}
           </select>
-
           <select
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
@@ -159,14 +166,12 @@ const Home = () => {
           </select>
         </div>
 
-        {/* Show notification if it exists */}
         {notification && (
           <div className={`alert ${notification.type === 'success' ? 'alert-success' : 'alert-error'} mb-4`}>
             {notification.message}
           </div>
         )}
 
-        {/* Display Notes */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredNotes.length ? (
             filteredNotes.map((note) => (
@@ -180,11 +185,10 @@ const Home = () => {
                 <Link to={`/edit/${note.id}`}>
                   <button className="btn btn-sm btn-info mt-2">Edit Note</button>
                 </Link>
-                {/* Add Delete Button */}
                 <button
                   onClick={() => {
-                    setNoteToDelete(note); // Store note to delete
-                    setOpenDeleteModal(true); // Open confirmation modal
+                    setNoteToDelete(note);
+                    setOpenDeleteModal(true);
                   }}
                   className="btn btn-sm btn-error mt-2 ml-2"
                 >
@@ -199,7 +203,6 @@ const Home = () => {
       </main>
       <Footer />
 
-      {/* Modal for Create New Note */}
       {openModal && (
         <div className="fixed inset-0 flex justify-center items-center bg-gray-900 bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
@@ -234,25 +237,19 @@ const Home = () => {
                 <div className="flex items-center mt-2">
                   <input
                     type="text"
+                    placeholder="New category"
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    className="input input-bordered mr-2 w-full"
-                    placeholder="Create new category"
+                    className="input input-bordered w-full"
                   />
-                  <button
-                    type="button"
-                    onClick={handleAddCategory}
-                    className="btn btn-sm btn-primary"
-                  >
-                    Add
-                  </button>
+                  <button onClick={handleAddCategory} type="button" className="btn btn-primary ml-2">Add</button>
                 </div>
               </div>
               <div className="form-control">
                 <label className="label">Urgency</label>
                 <select
                   value={urgency}
-                  onChange={(e) => setUrgency(e.target.value)} // Ensure this is controlled
+                  onChange={(e) => setUrgency(e.target.value)}
                   className="select select-bordered w-full"
                 >
                   <option value="Low">Low</option>
@@ -261,22 +258,30 @@ const Home = () => {
                 </select>
               </div>
               <div className="form-control">
-                <button type="submit" className="btn btn-primary w-full">Create Note</button>
+                <label className="label">Upload Image</label>
+                <input
+                  type="file"
+                  onChange={(e) => setImage(e.target.files[0])}
+                  className="input input-bordered w-full"
+                />
+              </div>
+              <div className="flex justify-end space-x-4">
+                <button onClick={() => setOpenModal(false)} type="button" className="btn btn-secondary">Cancel</button>
+                <button type="submit" className="btn btn-primary">Save Note</button>
               </div>
             </form>
-            <button onClick={() => setOpenModal(false)} className="btn btn-ghost w-full mt-4">Close</button>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {openDeleteModal && (
         <div className="fixed inset-0 flex justify-center items-center bg-gray-900 bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-lg font-semibold mb-4">Are you sure you want to delete this note?</h2>
-            <div className="flex justify-between">
-              <button onClick={() => setOpenDeleteModal(false)} className="btn btn-ghost">Cancel</button>
-              <button onClick={handleDeleteNote} className="btn btn-danger">Delete</button>
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
+            <p>Are you sure you want to delete this note?</p>
+            <div className="flex justify-end space-x-4 mt-4">
+              <button onClick={() => setOpenDeleteModal(false)} className="btn btn-secondary">Cancel</button>
+              <button onClick={handleDeleteNote} className="btn btn-error">Delete</button>
             </div>
           </div>
         </div>
@@ -286,4 +291,3 @@ const Home = () => {
 };
 
 export default Home;
-
