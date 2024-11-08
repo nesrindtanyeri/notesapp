@@ -11,7 +11,7 @@ const Home = () => {
   const [urgency, setUrgency] = useState('Low');
   const [image, setImage] = useState(null);
   const [notification, setNotification] = useState(null);
-  const [openModal, setOpenModal] = useState(false); // To control modal visibility
+  const [openModal, setOpenModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -230,6 +230,23 @@ const Home = () => {
                   onChange={handleCategoryChange}
                   value={selectedCategories}
                 />
+                {/* New Category Input */}
+                <div className="mt-2">
+                  <label className="block">Add New Category</label>
+                  <input
+                    type="text"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className="input input-bordered w-full"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCategory}
+                    className="btn btn-sm btn-info mt-2"
+                  >
+                    Add Category
+                  </button>
+                </div>
               </div>
               <div className="mb-4">
                 <label className="block">Urgency</label>
@@ -264,3 +281,4 @@ const Home = () => {
 };
 
 export default Home;
+
