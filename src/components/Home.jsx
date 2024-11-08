@@ -1,24 +1,79 @@
-import React, { useState, useEffect } from 'react';
+import React, { useReducer, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useNotes } from '../context/NotesContext';
 import Select from 'react-select';
 
+// Define initial state
+const initialState = {
+  title: '',
+  content: '',
+  selectedCategories: [],
+  urgency: 'Low',
+  image: null,
+  notification: null,
+  openModal: false,
+  openDeleteModal: false,
+  noteToDelete: null,
+  searchTerm: '',
+  selectedCategory: '',
+  selectedDate: '',
+  newCategory: '',
+};
+
+// Define actions
+const actionTypes = {
+  SET_TITLE: 'SET_TITLE',
+  SET_CONTENT: 'SET_CONTENT',
+  SET_SELECTED_CATEGORIES: 'SET_SELECTED_CATEGORIES',
+  SET_URGENCY: 'SET_URGENCY',
+  SET_IMAGE: 'SET_IMAGE',
+  SET_NOTIFICATION: 'SET_NOTIFICATION',
+  SET_OPEN_MODAL: 'SET_OPEN_MODAL',
+  SET_OPEN_DELETE_MODAL: 'SET_OPEN_DELETE_MODAL',
+  SET_NOTE_TO_DELETE: 'SET_NOTE_TO_DELETE',
+  SET_SEARCH_TERM: 'SET_SEARCH_TERM',
+  SET_SELECTED_CATEGORY: 'SET_SELECTED_CATEGORY',
+  SET_SELECTED_DATE: 'SET_SELECTED_DATE',
+  SET_NEW_CATEGORY: 'SET_NEW_CATEGORY',
+};
+
+// Reducer function
+const reducer = (state, action) => {
+  switch (action.type) {
+    case actionTypes.SET_TITLE:
+      return { ...state, title: action.payload };
+    case actionTypes.SET_CONTENT:
+      return { ...state, content: action.payload };
+    case actionTypes.SET_SELECTED_CATEGORIES:
+      return { ...state, selectedCategories: action.payload };
+    case actionTypes.SET_URGENCY:
+      return { ...state, urgency: action.payload };
+    case actionTypes.SET_IMAGE:
+      return { ...state, image: action.payload };
+    case actionTypes.SET_NOTIFICATION:
+      return { ...state, notification: action.payload };
+    case actionTypes.SET_OPEN_MODAL:
+      return { ...state, openModal: action.payload };
+    case actionTypes.SET_OPEN_DELETE_MODAL:
+      return { ...state, openDeleteModal: action.payload };
+    case actionTypes.SET_NOTE_TO_DELETE:
+      return { ...state, noteToDelete: action.payload };
+    case actionTypes.SET_SEARCH_TERM:
+      return { ...state, searchTerm: action.payload };
+    case actionTypes.SET_SELECTED_CATEGORY:
+      return { ...state, selectedCategory: action.payload };
+    case actionTypes.SET_SELECTED_DATE:
+      return { ...state, selectedDate: action.payload };
+    case actionTypes.SET_NEW_CATEGORY:
+      return { ...state, newCategory: action.payload };
+    default:
+      return state;
+  }
+};
+
 const Home = () => {
   const { notes, setNotes, categories, setCategories, loggedInUser } = useNotes();
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [urgency, setUrgency] = useState('Low');
-  const [image, setImage] = useState(null);
-  const [notification, setNotification] = useState(null);
-  const [openModal, setOpenModal] = useState(false);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [noteToDelete, setNoteToDelete] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
-  const [newCategory, setNewCategory] = useState('');
-
+  const [state, dispatch] = useReducer(reducer, initialState);
   const currentDate = new Date().toLocaleDateString();
 
   useEffect(() => {
@@ -36,33 +91,33 @@ const Home = () => {
 
   const handleCreateNote = (e) => {
     e.preventDefault();
-    if (title && content && selectedCategories.length > 0) {
+    if (state.title && state.content && state.selectedCategories.length > 0) {
       const newNote = {
         id: Date.now().toString(),
         userId: loggedInUser ? loggedInUser.username : "guest", // Use "guest" if loggedInUser is null
-        title,
-        content,
-        categories: selectedCategories.map((category) => category.value),
+        title: state.title,
+        content: state.content,
+        categories: state.selectedCategories.map((category) => category.value),
         date: currentDate,
-        urgency,
-        image: image ? URL.createObjectURL(image) : null,
+        urgency: state.urgency,
+        image: state.image ? URL.createObjectURL(state.image) : null,
       };
       const updatedNotes = [...notes, newNote];
       setNotes(updatedNotes);
       localStorage.setItem('notes', JSON.stringify(updatedNotes));
-      setTitle('');
-      setContent('');
-      setSelectedCategories([]);
-      setUrgency('Low');
-      setImage(null);
-      setOpenModal(false);
-      setNotification({ type: 'success', message: 'Note successfully added!' });
-      setTimeout(() => setNotification(null), 3000);
+      dispatch({ type: actionTypes.SET_TITLE, payload: '' });
+      dispatch({ type: actionTypes.SET_CONTENT, payload: '' });
+      dispatch({ type: actionTypes.SET_SELECTED_CATEGORIES, payload: [] });
+      dispatch({ type: actionTypes.SET_URGENCY, payload: 'Low' });
+      dispatch({ type: actionTypes.SET_IMAGE, payload: null });
+      dispatch({ type: actionTypes.SET_OPEN_MODAL, payload: false });
+      dispatch({ type: actionTypes.SET_NOTIFICATION, payload: { type: 'success', message: 'Note successfully added!' } });
+      setTimeout(() => dispatch({ type: actionTypes.SET_NOTIFICATION, payload: null }), 3000);
     }
   };
 
   const handleCategoryChange = (selectedOptions) => {
-    setSelectedCategories(selectedOptions || []);
+    dispatch({ type: actionTypes.SET_SELECTED_CATEGORIES, payload: selectedOptions || [] });
   };
 
   const categoryOptions = categories.map((cat) => ({
@@ -71,27 +126,27 @@ const Home = () => {
   }));
 
   const handleDeleteNote = () => {
-    if (noteToDelete) {
-      const updatedNotes = notes.filter((note) => note.id !== noteToDelete.id);
+    if (state.noteToDelete) {
+      const updatedNotes = notes.filter((note) => note.id !== state.noteToDelete.id);
       setNotes(updatedNotes);
       localStorage.setItem('notes', JSON.stringify(updatedNotes));
-      setOpenDeleteModal(false);
-      setNotification({ type: 'success', message: 'Note successfully deleted!' });
-      setTimeout(() => setNotification(null), 3000);
+      dispatch({ type: actionTypes.SET_OPEN_DELETE_MODAL, payload: false });
+      dispatch({ type: actionTypes.SET_NOTIFICATION, payload: { type: 'success', message: 'Note successfully deleted!' } });
+      setTimeout(() => dispatch({ type: actionTypes.SET_NOTIFICATION, payload: null }), 3000);
     }
   };
 
   const filteredNotes = notes.filter((note) => {
     const matchesSearchTerm =
-      note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      note.content.toLowerCase().includes(searchTerm.toLowerCase());
+      note.title.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
+      note.content.toLowerCase().includes(state.searchTerm.toLowerCase());
 
-    const matchesCategory = selectedCategory ? note.categories.includes(selectedCategory) : true;
+    const matchesCategory = state.selectedCategory ? note.categories.includes(state.selectedCategory) : true;
 
     const matchesDate =
-      selectedDate === 'Today'
+      state.selectedDate === 'Today'
         ? note.date === currentDate
-        : selectedDate === 'This Week'
+        : state.selectedDate === 'This Week'
         ? isThisWeek(note.date)
         : true;
 
@@ -107,15 +162,15 @@ const Home = () => {
   };
 
   const handleAddCategory = () => {
-    const normalizedCategory = newCategory.trim().toLowerCase();
+    const normalizedCategory = state.newCategory.trim().toLowerCase();
     if (normalizedCategory && !categories.some(cat => cat.toLowerCase() === normalizedCategory)) {
-      setCategories([...categories, newCategory]);
-      setNewCategory('');
-      setNotification({ type: 'success', message: 'Category added successfully!' });
-      setTimeout(() => setNotification(null), 3000);
+      setCategories([...categories, state.newCategory]);
+      dispatch({ type: actionTypes.SET_NEW_CATEGORY, payload: '' });
+      dispatch({ type: actionTypes.SET_NOTIFICATION, payload: { type: 'success', message: 'Category added successfully!' } });
+      setTimeout(() => dispatch({ type: actionTypes.SET_NOTIFICATION, payload: null }), 3000);
     } else {
-      setNotification({ type: 'error', message: 'Category already exists!' });
-      setTimeout(() => setNotification(null), 3000);
+      dispatch({ type: actionTypes.SET_NOTIFICATION, payload: { type: 'error', message: 'Category already exists!' } });
+      setTimeout(() => dispatch({ type: actionTypes.SET_NOTIFICATION, payload: null }), 3000);
     }
   };
 
@@ -128,13 +183,13 @@ const Home = () => {
           <input
             type="text"
             placeholder="Search by title or content"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={state.searchTerm}
+            onChange={(e) => dispatch({ type: actionTypes.SET_SEARCH_TERM, payload: e.target.value })}
             className="input input-bordered w-1/3"
           />
           <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            value={state.selectedCategory}
+            onChange={(e) => dispatch({ type: actionTypes.SET_SELECTED_CATEGORY, payload: e.target.value })}
             className="select select-bordered w-1/4"
           >
             <option value="">Filter by category</option>
@@ -145,8 +200,8 @@ const Home = () => {
             ))}
           </select>
           <select
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            value={state.selectedDate}
+            onChange={(e) => dispatch({ type: actionTypes.SET_SELECTED_DATE, payload: e.target.value })}
             className="select select-bordered w-1/4"
           >
             <option value="">Filter by date</option>
@@ -156,14 +211,14 @@ const Home = () => {
         </div>
 
         <div className="mb-4">
-          <button onClick={() => setOpenModal(true)} className="btn btn-primary">
+          <button onClick={() => dispatch({ type: actionTypes.SET_OPEN_MODAL, payload: true })} className="btn btn-primary">
             Create a Note
           </button>
         </div>
 
-        {notification && (
-          <div className={`alert ${notification.type === 'success' ? 'alert-success' : 'alert-error'} mb-4`}>
-            {notification.message}
+        {state.notification && (
+          <div className={`alert ${state.notification.type === 'success' ? 'alert-success' : 'alert-error'} mb-4`}>
+            {state.notification.message}
           </div>
         )}
 
@@ -182,8 +237,8 @@ const Home = () => {
                 </Link>
                 <button
                   onClick={() => {
-                    setNoteToDelete(note);
-                    setOpenDeleteModal(true);
+                    dispatch({ type: actionTypes.SET_NOTE_TO_DELETE, payload: note });
+                    dispatch({ type: actionTypes.SET_OPEN_DELETE_MODAL, payload: true });
                   }}
                   className="btn btn-sm btn-error mt-2 ml-2"
                 >
@@ -198,7 +253,7 @@ const Home = () => {
       </main>
 
       {/* Create Modal */}
-      {openModal && (
+      {state.openModal && (
         <div className="modal modal-open">
           <div className="modal-box">
             <h2 className="text-xl font-bold mb-4">Create a New Note</h2>
@@ -207,8 +262,8 @@ const Home = () => {
                 <label className="block">Title</label>
                 <input
                   type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  value={state.title}
+                  onChange={(e) => dispatch({ type: actionTypes.SET_TITLE, payload: e.target.value })}
                   className="input input-bordered w-full"
                   required
                 />
@@ -216,8 +271,8 @@ const Home = () => {
               <div className="mb-4">
                 <label className="block">Content</label>
                 <textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  value={state.content}
+                  onChange={(e) => dispatch({ type: actionTypes.SET_CONTENT, payload: e.target.value })}
                   className="textarea textarea-bordered w-full"
                   required
                 />
@@ -228,15 +283,15 @@ const Home = () => {
                   options={categoryOptions}
                   isMulti
                   onChange={handleCategoryChange}
-                  value={selectedCategories}
+                  value={state.selectedCategories}
                 />
                 {/* New Category Input */}
                 <div className="mt-2">
                   <label className="block">Add New Category</label>
                   <input
                     type="text"
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
+                    value={state.newCategory}
+                    onChange={(e) => dispatch({ type: actionTypes.SET_NEW_CATEGORY, payload: e.target.value })}
                     className="input input-bordered w-full"
                   />
                   <button
@@ -251,8 +306,8 @@ const Home = () => {
               <div className="mb-4">
                 <label className="block">Urgency</label>
                 <select
-                  value={urgency}
-                  onChange={(e) => setUrgency(e.target.value)}
+                  value={state.urgency}
+                  onChange={(e) => dispatch({ type: actionTypes.SET_URGENCY, payload: e.target.value })}
                   className="select select-bordered w-full"
                 >
                   <option value="Low">Low</option>
@@ -264,13 +319,13 @@ const Home = () => {
                 <label className="block">Image</label>
                 <input
                   type="file"
-                  onChange={(e) => setImage(e.target.files[0])}
+                  onChange={(e) => dispatch({ type: actionTypes.SET_IMAGE, payload: e.target.files[0] })}
                   className="file-input file-input-bordered w-full"
                 />
               </div>
               <div className="flex justify-between">
                 <button type="submit" className="btn btn-primary">Create</button>
-                <button type="button" onClick={() => setOpenModal(false)} className="btn btn-secondary">Cancel</button>
+                <button type="button" onClick={() => dispatch({ type: actionTypes.SET_OPEN_MODAL, payload: false })} className="btn btn-secondary">Cancel</button>
               </div>
             </form>
           </div>

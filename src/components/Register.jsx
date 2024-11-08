@@ -1,19 +1,24 @@
-// src/components/Register.jsx
 import React, { useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const history = useHistory();
+  const navigate = useNavigate();  // React Router v6 uses `useNavigate` instead of `useHistory`
 
   const handleRegister = (e) => {
     e.preventDefault();
 
+    // Check if username and password are valid
+    if (username.length < 3 || password.length < 6) {
+      setError('Username must be at least 3 characters long and password at least 6 characters.');
+      return;
+    }
+
     // Check if the username already exists in localStorage
     const users = JSON.parse(localStorage.getItem('users')) || [];
-    const userExists = users.some(user => user.username === username);
+    const userExists = users.some((user) => user.username === username);
 
     if (userExists) {
       setError('Username already exists');
@@ -26,7 +31,18 @@ const Register = () => {
     localStorage.setItem('users', JSON.stringify(users));
 
     // Redirect to sign-in page after successful registration
-    history.push('/sign-in');
+    navigate('/sign-in');
+  };
+
+  // Reset error message when user starts typing in the fields
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (error) setError(''); // Clear error when user starts typing
+    if (name === 'username') {
+      setUsername(value);
+    } else if (name === 'password') {
+      setPassword(value);
+    }
   };
 
   return (
@@ -37,8 +53,9 @@ const Register = () => {
           <label>Username:</label>
           <input
             type="text"
+            name="username"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={handleInputChange}
             required
           />
         </div>
@@ -46,8 +63,9 @@ const Register = () => {
           <label>Password:</label>
           <input
             type="password"
+            name="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={handleInputChange}
             required
           />
         </div>
