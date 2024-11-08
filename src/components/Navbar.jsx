@@ -5,10 +5,7 @@ const Navbar = ({ openCreateModal }) => {
   return (
     <nav className="navbar bg-base-200 p-4 shadow-lg">
       <div className="flex-1">
-        {/* Button to trigger the modal */}
-        <button onClick={openCreateModal} className="btn btn-primary btn-sm mx-2">
-          Create Note
-        </button>
+    
         <Link to="/" className="text-xl font-bold text-primary">
           Notes App
         </Link>

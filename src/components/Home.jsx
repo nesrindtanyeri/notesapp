@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Navbar from './Navbar';
-import Footer from './Footer';
 import { useNotes } from '../context/NotesContext';
 import Select from 'react-select';
 
@@ -13,7 +11,7 @@ const Home = () => {
   const [urgency, setUrgency] = useState('Low');
   const [image, setImage] = useState(null);
   const [notification, setNotification] = useState(null);
-  const [openModal, setOpenModal] = useState(false);
+  const [openModal, setOpenModal] = useState(false); // To control modal visibility
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,38 +36,30 @@ const Home = () => {
 
   const handleCreateNote = (e) => {
     e.preventDefault();
-    // Temporarily comment out this login check
-  /*
-  if (!loggedInUser) {
-    setNotification({ type: 'error', message: 'Please sign in to create a note.' });
-    setTimeout(() => setNotification(null), 3000);
-    return;
-  }
-  */
-  if (title && content && selectedCategories.length > 0) {
-    const newNote = {
-      id: Date.now().toString(),
-      userId: loggedInUser ? loggedInUser.username : "guest", // Use "guest" if loggedInUser is null
-      title,
-      content,
-      categories: selectedCategories.map((category) => category.value),
-      date: currentDate,
-      urgency,
-      image: image ? URL.createObjectURL(image) : null,
-    };
-    const updatedNotes = [...notes, newNote];
-    setNotes(updatedNotes);
-    localStorage.setItem('notes', JSON.stringify(updatedNotes));
-    setTitle('');
-    setContent('');
-    setSelectedCategories([]);
-    setUrgency('Low');
-    setImage(null);
-    setOpenModal(false);
-    setNotification({ type: 'success', message: 'Note successfully added!' });
-    setTimeout(() => setNotification(null), 3000);
-  }
-};
+    if (title && content && selectedCategories.length > 0) {
+      const newNote = {
+        id: Date.now().toString(),
+        userId: loggedInUser ? loggedInUser.username : "guest", // Use "guest" if loggedInUser is null
+        title,
+        content,
+        categories: selectedCategories.map((category) => category.value),
+        date: currentDate,
+        urgency,
+        image: image ? URL.createObjectURL(image) : null,
+      };
+      const updatedNotes = [...notes, newNote];
+      setNotes(updatedNotes);
+      localStorage.setItem('notes', JSON.stringify(updatedNotes));
+      setTitle('');
+      setContent('');
+      setSelectedCategories([]);
+      setUrgency('Low');
+      setImage(null);
+      setOpenModal(false);
+      setNotification({ type: 'success', message: 'Note successfully added!' });
+      setTimeout(() => setNotification(null), 3000);
+    }
+  };
 
   const handleCategoryChange = (selectedOptions) => {
     setSelectedCategories(selectedOptions || []);
@@ -131,7 +121,6 @@ const Home = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar openCreateModal={() => setOpenModal(true)} />
       <main className="flex-grow p-4">
         <h1 className="text-2xl font-bold mb-4">Your Notes</h1>
 
@@ -164,6 +153,12 @@ const Home = () => {
             <option value="Today">Today</option>
             <option value="This Week">This Week</option>
           </select>
+        </div>
+
+        <div className="mb-4">
+          <button onClick={() => setOpenModal(true)} className="btn btn-primary">
+            Create a Note
+          </button>
         </div>
 
         {notification && (
@@ -201,52 +196,43 @@ const Home = () => {
           )}
         </div>
       </main>
-      <Footer />
 
+      {/* Create Modal */}
       {openModal && (
-        <div className="fixed inset-0 flex justify-center items-center bg-gray-900 bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-lg font-semibold mb-4">Create New Note</h2>
-            <form onSubmit={handleCreateNote} className="space-y-4">
-              <div className="form-control">
-                <label className="label">Title</label>
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h2 className="text-xl font-bold mb-4">Create a New Note</h2>
+            <form onSubmit={handleCreateNote}>
+              <div className="mb-4">
+                <label className="block">Title</label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="input input-bordered w-full"
+                  required
                 />
               </div>
-              <div className="form-control">
-                <label className="label">Content</label>
+              <div className="mb-4">
+                <label className="block">Content</label>
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   className="textarea textarea-bordered w-full"
+                  required
                 />
               </div>
-              <div className="form-control">
-                <label className="label">Categories</label>
+              <div className="mb-4">
+                <label className="block">Select Categories</label>
                 <Select
-                  isMulti
-                  value={selectedCategories}
-                  onChange={handleCategoryChange}
                   options={categoryOptions}
-                  className="select-bordered"
+                  isMulti
+                  onChange={handleCategoryChange}
+                  value={selectedCategories}
                 />
-                <div className="flex items-center mt-2">
-                  <input
-                    type="text"
-                    placeholder="New category"
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    className="input input-bordered w-full"
-                  />
-                  <button onClick={handleAddCategory} type="button" className="btn btn-primary ml-2">Add</button>
-                </div>
               </div>
-              <div className="form-control">
-                <label className="label">Urgency</label>
+              <div className="mb-4">
+                <label className="block">Urgency</label>
                 <select
                   value={urgency}
                   onChange={(e) => setUrgency(e.target.value)}
@@ -257,32 +243,19 @@ const Home = () => {
                   <option value="High">High</option>
                 </select>
               </div>
-              <div className="form-control">
-                <label className="label">Upload Image</label>
+              <div className="mb-4">
+                <label className="block">Image</label>
                 <input
                   type="file"
                   onChange={(e) => setImage(e.target.files[0])}
-                  className="input input-bordered w-full"
+                  className="file-input file-input-bordered w-full"
                 />
               </div>
-              <div className="flex justify-end space-x-4">
-                <button onClick={() => setOpenModal(false)} type="button" className="btn btn-secondary">Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Note</button>
+              <div className="flex justify-between">
+                <button type="submit" className="btn btn-primary">Create</button>
+                <button type="button" onClick={() => setOpenModal(false)} className="btn btn-secondary">Cancel</button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {openDeleteModal && (
-        <div className="fixed inset-0 flex justify-center items-center bg-gray-900 bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
-            <p>Are you sure you want to delete this note?</p>
-            <div className="flex justify-end space-x-4 mt-4">
-              <button onClick={() => setOpenDeleteModal(false)} className="btn btn-secondary">Cancel</button>
-              <button onClick={handleDeleteNote} className="btn btn-error">Delete</button>
-            </div>
           </div>
         </div>
       )}

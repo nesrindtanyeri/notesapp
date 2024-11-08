@@ -1,4 +1,3 @@
-// src/context/NotesContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
 const NotesContext = createContext();
@@ -18,7 +17,7 @@ export const NotesContextProvider = ({ children }) => {
       const allNotes = JSON.parse(localStorage.getItem('notes')) || [];
       setNotes(allNotes.filter(note => note.userId === user.username)); // Filter notes for logged-in user
     }
-  }, []);
+  }, []); // If loggedInUser changes, this effect will run
 
   const updateNotesInLocalStorage = (updatedNotes) => {
     localStorage.setItem('notes', JSON.stringify(updatedNotes));
