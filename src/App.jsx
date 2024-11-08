@@ -1,23 +1,15 @@
-import React, { useEffect } from 'react';
-import { Route, Routes, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Route, Routes, Navigate } from 'react-router-dom'; // No need for useNavigate or useEffect now
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './components/Home';
 import EditNote from './pages/EditNote';
 import Register from './pages/Register';
 import SignIn from './pages/SignIn';
-import { useNotes } from './context/NotesContext'; // Assuming NotesContext manages loggedInUser
+import { useNotes } from './context/NotesContext';
 
 const App = () => {
   const { loggedInUser } = useNotes(); // Get loggedInUser from context
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // If loggedInUser is not set, navigate to sign-in page
-    if (!loggedInUser) {
-      navigate('/signin');
-    }
-  }, [loggedInUser, navigate]);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -29,10 +21,10 @@ const App = () => {
           {/* Home page */}
           <Route path="/" element={<Home />} />
 
-          {/* Edit note page - only accessible if the user is logged in */}
+          {/* Edit note page - allows access even if the user is not logged in */}
           <Route
             path="/edit/:noteId"
-            element={loggedInUser ? <EditNote /> : <SignIn />}
+            element={loggedInUser ? <EditNote /> : <Navigate to="/signin" />}
           />
 
           {/* Register page - accessible without login */}

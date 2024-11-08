@@ -1,32 +1,10 @@
-import React, { useReducer } from 'react';
+// src/pages/SignIn.jsx
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Define action types
-const actionTypes = {
-  SET_USERNAME: 'SET_USERNAME',
-  SET_PASSWORD: 'SET_PASSWORD',
-};
-
-// Reducer function to handle state updates
-const reducer = (state, action) => {
-  switch (action.type) {
-    case actionTypes.SET_USERNAME:
-      return { ...state, username: action.payload };
-    case actionTypes.SET_PASSWORD:
-      return { ...state, password: action.payload };
-    default:
-      return state;
-  }
-};
-
 const SignIn = () => {
-  const initialState = {
-    username: '',
-    password: '',
-  };
-
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const { username, password } = state;
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   const handleSignIn = () => {
@@ -54,14 +32,14 @@ const SignIn = () => {
           placeholder="Username"
           className="input input-bordered w-full mb-4"
           value={username}
-          onChange={(e) => dispatch({ type: actionTypes.SET_USERNAME, payload: e.target.value })}
+          onChange={(e) => setUsername(e.target.value)}
         />
         <input
           type="password"
           placeholder="Password"
           className="input input-bordered w-full mb-4"
           value={password}
-          onChange={(e) => dispatch({ type: actionTypes.SET_PASSWORD, payload: e.target.value })}
+          onChange={(e) => setPassword(e.target.value)}
         />
         <button className="btn btn-primary w-full" onClick={handleSignIn}>
           Sign In
